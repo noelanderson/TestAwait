@@ -70,6 +70,22 @@ arduino-cli compile --fqbn rp2040:rp2040:rpipico2 --library lib/SimpleAwait .
 To flash, append `--upload --port <PORT>`, or hold **BOOTSEL** while plugging in
 and drag the generated `.uf2` onto the `RP2350` mass-storage drive.
 
+## Prebuilt UF2 (releases)
+
+Tagged [releases](https://github.com/noelanderson/TestAwait/releases) attach a
+prebuilt, flashable `.uf2` for the Pico 2, built in CI by
+[`.github/workflows/release.yml`](.github/workflows/release.yml). To flash without
+building anything yourself:
+
+1. Download `TestAwait-<tag>-rpipico2.uf2` from the latest release.
+2. Hold **BOOTSEL** while plugging the Pico 2 into USB; it mounts as an `RP2350`
+   mass-storage drive.
+3. Copy the `.uf2` onto that drive — the board reboots and runs immediately.
+4. Open the USB serial monitor at 115200 baud to watch the two workers report.
+
+To cut a new release, push a `v*` tag (for example `git tag v1.0.0 && git push
+origin v1.0.0`); the workflow compiles the sketch and publishes the `.uf2`.
+
 ## CI
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) compiles the sketch for

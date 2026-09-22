@@ -1,0 +1,62 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to (re)build a UF2 release for, e.g. v1.0.0'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build UF2 and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup arduino-cli
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install RP2040/RP2350 core
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls \
+            https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+          arduino-cli core update-index
+          arduino-cli core install rp2040:rp2040
+
+      - name: Resolve tag
+        id: meta
+        run: echo "tag=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Compile UF2 for Pico 2 (RP2350, Arm)
+        run: |
+          arduino-cli compile \
+            --fqbn rp2040:rp2040:rpipico2 \
+            --library lib/SimpleAwait \
+            --output-dir dist \
+            .
+          cp dist/*.uf2 "TestAwait-${{ steps.meta.outputs.tag }}-rpipico2.uf2"
+          ls -la *.uf2
+
+      - name: Publish release with UF2 asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="Flashable UF2 for the Raspberry Pi Pico 2 (RP2350, Arm — fqbn \`rp2040:rp2040:rpipico2\`), built from the SimpleAwait README example.
+
+          **Flash:** hold **BOOTSEL** while plugging in the Pico 2, then copy \`TestAwait-${{ steps.meta.outputs.tag }}-rpipico2.uf2\` onto the \`RP2350\` mass-storage drive. It reboots and runs immediately — open the USB serial monitor at 115200 baud to watch the workers report."
+          gh release create "${{ steps.meta.outputs.tag }}" \
+            "TestAwait-${{ steps.meta.outputs.tag }}-rpipico2.uf2" \
+            --title "TestAwait ${{ steps.meta.outputs.tag }}" \
+            --notes "$NOTES" \
+          || gh release upload "${{ steps.meta.outputs.tag }}" \
+            "TestAwait-${{ steps.meta.outputs.tag }}-rpipico2.uf2" --clobber
