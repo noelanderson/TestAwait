@@ -63,12 +63,27 @@ arduino-cli config add board_manager.additional_urls \
 arduino-cli core update-index
 arduino-cli core install rp2040:rp2040
 
-# compile for the Pico 2 (RP2350, Arm)
-arduino-cli compile --fqbn rp2040:rp2040:rpipico2 --library lib/SimpleAwait .
+# compile for the Pico 2 (RP2350, Arm) and export the binaries next to the sketch
+arduino-cli compile --fqbn rp2040:rp2040:rpipico2 --library lib/SimpleAwait \
+  --export-binaries .
 ```
 
-To flash, append `--upload --port <PORT>`, or hold **BOOTSEL** while plugging in
-and drag the generated `.uf2` onto the `RP2350` mass-storage drive.
+> **Where's the `.uf2`?** A plain `arduino-cli compile` builds into a temporary
+> cache and leaves nothing in the project folder. Pass `--export-binaries` (as
+> above) to write the artifacts to `build/rp2040.rp2040.rpipico2/`, giving you
+> `build/rp2040.rp2040.rpipico2/TestAwait.ino.uf2`. Alternatively use
+> `--output-dir dist` to collect them into `dist/`. (Both `build/` and `*.uf2`
+> are git-ignored.)
+
+To flash, either let arduino-cli do it over USB:
+
+```sh
+arduino-cli compile --fqbn rp2040:rp2040:rpipico2 --library lib/SimpleAwait \
+  --upload --port <PORT> .
+```
+
+or hold **BOOTSEL** while plugging in the board and drag the exported
+`TestAwait.ino.uf2` onto the `RP2350` mass-storage drive.
 
 ## Prebuilt UF2 (releases)
 
