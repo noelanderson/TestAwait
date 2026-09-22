@@ -1,0 +1,12 @@
+# Arduino / arduino-cli build output
+/build/
+*.uf2
+*.elf
+*.bin
+*.hex
+*.map
+*.d
+*.o
+
+# arduino-cli local cache / output
+.arduino/

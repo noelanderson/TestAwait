@@ -1,0 +1,3 @@
+[submodule "lib/SimpleAwait"]
+	path = lib/SimpleAwait
+	url = https://github.com/noelanderson/SimpleAwait.git
