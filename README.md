@@ -4,13 +4,15 @@ A minimal standalone application that exercises the
 [SimpleAwait](https://github.com/noelanderson/SimpleAwait) cooperative-coroutine
 library on a **Raspberry Pi Pico 2 (RP2350, Arm)**.
 
-It implements the quick-start example from the SimpleAwait README: one cooperative
-blink `Task` plus two worker `Task`s that each wake on their own interval and
+It extends the quick-start example from the SimpleAwait README: three independent
+blink `Task`s plus two worker `Task`s that each wake on their own interval and
 print, over `Serial`, how many milliseconds actually elapsed since they last ran.
 
 ## What it does
 
-- `blink()` toggles the onboard LED every 500 ms using `co_await delay_ms(500)`.
+- Three `blink(pin, period_on_ms, period_off_ms)` tasks toggle the onboard LED
+  (on 500 ms / off 1000 ms), GP16 (500 ms / 500 ms), and GP17 (300 ms / 300 ms)
+  independently, each using `co_await delay_ms(...)`.
 - `worker("worker A", 1350)` and `worker("worker B", 1200)` wake every 1350 ms and
   1200 ms respectively and print the real elapsed time (measured with `millis()`),
   so you can watch the two independent cadences interleave on the serial monitor.
@@ -64,22 +66,21 @@ arduino-cli core update-index
 arduino-cli core install rp2040:rp2040
 
 # compile for the Pico 2 (RP2350, Arm) and export the binaries next to the sketch
-arduino-cli compile --fqbn rp2040:rp2040:rpipico2 --library lib/SimpleAwait \
-  --export-binaries .
+arduino-cli compile --fqbn rp2040:rp2040:rpipico2 --library lib/SimpleAwait --export-binaries .
 ```
 
-> **Where's the `.uf2`?** A plain `arduino-cli compile` builds into a temporary
-> cache and leaves nothing in the project folder. Pass `--export-binaries` (as
-> above) to write the artifacts to `build/rp2040.rp2040.rpipico2/`, giving you
-> `build/rp2040.rp2040.rpipico2/TestAwait.ino.uf2`. Alternatively use
-> `--output-dir dist` to collect them into `dist/`. (Both `build/` and `*.uf2`
-> are git-ignored.)
+> **Where's the `.uf2`?** 
+> Passing `--export-binaries` (as above) writes the artifacts to
+> `build/rp2040.rp2040.rpipico2/`, giving you `build/rp2040.rp2040.rpipico2/TestAwait.ino.uf2`.
+>
+> Alternatively use `--output-dir dist` to collect them into `dist/`. 
+>
+> (Both `build/` and `*.uf2` are git-ignored.)
 
 To flash, either let arduino-cli do it over USB:
 
 ```sh
-arduino-cli compile --fqbn rp2040:rp2040:rpipico2 --library lib/SimpleAwait \
-  --upload --port <PORT> .
+arduino-cli compile --fqbn rp2040:rp2040:rpipico2 --library lib/SimpleAwait --upload --port <PORT> .
 ```
 
 or hold **BOOTSEL** while plugging in the board and drag the exported

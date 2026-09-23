@@ -1,31 +1,30 @@
 // TestAwait — a standalone app that exercises the SimpleAwait library on a
 // Raspberry Pi Pico 2 (RP2350, Arm).
 //
-// This is the quick-start example from the SimpleAwait README: one cooperative
-// blink Task plus two worker Tasks that each wake on their own interval and
-// print, over Serial, how many milliseconds actually elapsed since they last ran.
 //
 //   Target : rp2040:rp2040:rpipico2  (Raspberry Pi Pico 2, RP2350 Arm)
 //   Library: lib/SimpleAwait          (git submodule)
 
 #include <SimpleAwait.h>
 
-// The Pico 2's onboard LED is GPIO 25; the core defines LED_BUILTIN for this
-// board, but fall back just in case the sketch is retargeted.
-#ifndef LED_BUILTIN
-#define LED_BUILTIN 25
-#endif
+#if !defined(LED_BUILTIN)
+    #define LED_BUILTIN 25
+#endif // LED_BUILTIN 
+
+#define GP16 16
+#define GP17 17
 
 using namespace simpleawait;
 
-Task<void> blink() {
+Task<void> blink(int pin, uint32_t period_on_ms, uint32_t period_off_ms) {
     while (true) {
-        digitalWrite(LED_BUILTIN, HIGH);
-        co_await delay_ms(500);
-        digitalWrite(LED_BUILTIN, LOW);
-        co_await delay_ms(500);
+        digitalWrite(pin, HIGH);
+        co_await delay_ms(period_on_ms);
+        digitalWrite(pin, LOW);
+        co_await delay_ms(period_off_ms);
     }
 }
+
 
 // Each worker wakes on its own interval and reports how long it actually slept.
 Task<void> worker(const char* name, uint32_t period_ms) {
@@ -44,9 +43,16 @@ Task<void> worker(const char* name, uint32_t period_ms) {
 void setup() {
     Serial.begin(115200);
     pinMode(LED_BUILTIN, OUTPUT);
-    spawn(blink());
+    pinMode(GP16, OUTPUT);
+    pinMode(GP17, OUTPUT);
+
+    spawn(blink(LED_BUILTIN, 500, 1000));
+    spawn(blink(GP16, 500, 500));
+    spawn(blink(GP17, 300, 300));
     spawn(worker("worker A", 1350));
     spawn(worker("worker B", 1200));
 }
 
-void loop() { poll(); }
+void loop() { 
+    poll(); 
+}
